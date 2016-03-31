@@ -1,3 +1,8 @@
+function cl(message?: any, ...optionalParams: any[])
+{
+    console.log.apply(console, arguments);
+}
+
 
 class Config
 {
@@ -22,11 +27,21 @@ function Init()
 
     var obs = chunk.GetObstacles();
     var meshes = chunk.GetNavMesh();
+    var seg = chunk.GetBlockingSegments(obs);
     window["meshes"] = meshes;
-    Draw(obs, chunk.GetBlockingSegments(obs), meshes, chunk.GetNavMesh(false));
+    window["segments"] = seg;
+    Draw(meshes
+        , obs
+        , seg
+        , chunk.GetNavMesh(false)
+    );
 }
 
-function Draw(obstacles: Array<Obstacle>, blockingSegments: Array<Segment>, shapes: Array<ConvexShape>, originalShapes: Array<ConvexShape>)
+function Draw(
+    shapes: Array<ConvexShape>,
+    obstacles?: Array<Obstacle>,
+    blockingSegments?: Array<Segment>,
+    originalShapes?: Array<ConvexShape>)
 {
     console.info(blockingSegments, shapes);
     var canvas = <HTMLCanvasElement>document.getElementById("canvas");
@@ -36,16 +51,18 @@ function Draw(obstacles: Array<Obstacle>, blockingSegments: Array<Segment>, shap
 
 
     // draw obstacles
-    ctx.strokeStyle = "#F00";
-    ctx.fillStyle = "rgba(255,0,0,0.3)";
-    obstacles.forEach(o => ctx.fillRect(o.coord.x, o.coord.y, o.width, o.height));
-    blockingSegments.forEach(s =>
-    {
-        ctx.beginPath();
-        ctx.moveTo(s.pointA.x, s.pointA.y);
-        ctx.lineTo(s.pointB.x, s.pointB.y);
-        ctx.stroke();
-    });
+    if (obstacles) {
+        ctx.strokeStyle = "#F00";
+        ctx.fillStyle = "rgba(255,0,0,0.3)";
+        obstacles.forEach(o => ctx.fillRect(o.coord.x, o.coord.y, o.width, o.height));
+        blockingSegments.forEach(s =>
+        {
+            ctx.beginPath();
+            ctx.moveTo(s.pointA.x, s.pointA.y);
+            ctx.lineTo(s.pointB.x, s.pointB.y);
+            ctx.stroke();
+        });
+    }
 
 
     if (Config.Debug.TRIANGLE) {

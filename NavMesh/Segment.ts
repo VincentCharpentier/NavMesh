@@ -39,12 +39,11 @@ class Segment
         var thisSorted = this.GetSortedSegment();
         segment = segment.GetSortedSegment();
         if (thisSorted.dirCoef === segment.dirCoef) {
-            // console.info("no intersect: parallele")
+            // no intersect: parallele
             return null;
         } else {
             var equA = thisSorted.GetEquation();
             var equB = segment.GetEquation();
-            // console.log(equA, equB);
 
             if (equA.coeffDir === Infinity) {
                 var intersectX = thisSorted.pointA.x;
@@ -115,11 +114,32 @@ class Segment
                         toPrecision(intersectX * equA.coeffDir + equA.zeroVal)
                     );
                 } else {
-                    // console.info("intersection hors segments : ", intersectX);
                     return null;
                 }
             }
         }
+    }
+
+    public Contains(point: Coord)
+    {
+        var sorted = this.GetSortedSegment();
+        // point inside box
+        if (sorted.pointA.x <= point.x && sorted.pointA.y <= point.y
+            && sorted.pointB.x >= point.x && sorted.pointB.y >= point.y) {
+            var valueAtX: number;
+            // Vertical segment, can't compute Y
+            if (sorted.dirCoef === Infinity) {
+                valueAtX = point.y;
+            } else {
+                valueAtX = sorted.pointA.y + (point.x - sorted.pointA.x) * sorted.dirCoef;
+            }
+
+            // correct y value at x
+            if (valueAtX === point.y) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Equals(seg: Segment): boolean
@@ -127,5 +147,10 @@ class Segment
         var thisSorted = this.GetSortedSegment();
         seg = seg.GetSortedSegment();
         return seg.pointA.Equals(thisSorted.pointA) && seg.pointB.Equals(thisSorted.pointB)
+    }
+
+    public toString()
+    {
+        return this.pointA.toString() + " - " + this.pointB.toString();
     }
 }

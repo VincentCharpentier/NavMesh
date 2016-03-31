@@ -60,6 +60,22 @@ class Obstacle
         );
     }
 
+    public Contains(point: Coord, includeBorder = false)
+    {
+        if (includeBorder) {
+            if (point.x >= this.coord.x && point.x <= this.distX
+                && point.y >= this.coord.y && point.y <= this.distY) {
+                return true;
+            }
+        } else {
+            if (point.x > this.coord.x && point.x < this.distX
+                && point.y > this.coord.y && point.y < this.distY) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public GetSegments(): Array<Segment>
     {
         return new Array(
@@ -98,5 +114,10 @@ class Obstacle
                 )
             )
         );
+    }
+
+    public toString()
+    {
+        return "[o:" + this.coord.toString() + " (" + this.distX + "," + this.distY + ")]";
     }
 }
