@@ -22,6 +22,18 @@ class Chunk
             )
             ,
             new Obstacle(
+                new Coord(60, 60),
+                100,
+                20
+            )
+            ,
+            new Obstacle(
+                new Coord(60, 100),
+                20,
+                100
+            )
+            ,
+            new Obstacle(
                 new Coord(40, 160),
                 100,
                 60
@@ -34,8 +46,8 @@ class Chunk
             )
             ,
             new Obstacle(
-                new Coord(140, 180),
-                60,
+                new Coord(140, 170),
+                80,
                 10
             )
             ,
@@ -65,6 +77,7 @@ class Chunk
         );
 
         // normalize to fit inside chunk
+
         /*
         obstacles.forEach(o =>
         {
@@ -88,6 +101,7 @@ class Chunk
             }
         });
         */
+
         return obstacles;
     }
 
@@ -99,9 +113,7 @@ class Chunk
         {
             segments = segments.concat(o.GetSegments());
         });
-        // console.info(obstacles[0].GetSegments());
-        // console.warn(obstacles, segments)
-        // split overlapping segments & add intersection points
+        // split overlapping segments
         while (true) {
             var obstaclesDone = false;
             while (!obstaclesDone) {
@@ -123,9 +135,6 @@ class Chunk
                                 new Segment(s.pointA, inter).GetSortedSegment(),
                                 new Segment(inter, s.pointB).GetSortedSegment()
                             );
-                            // if (!points.some(p => p.Equals(inter))) {
-                            //     points.push(inter);
-                            // }
                             break;
                         }
                     }
@@ -196,9 +205,6 @@ class Chunk
                             while (todopoints.length > 0) {
                                 var point = todopoints.shift();
                                 if (lastPoint !== null && !lastPoint.Equals(point)) {
-                                    // if (!points.some(p => p.Equals(point))) {
-                                    //     points.push(point);
-                                    // }
                                     segments.push(new Segment(
                                         lastPoint, point
                                     ).GetSortedSegment());
@@ -216,6 +222,47 @@ class Chunk
             }
             if (segDone) {
                 break;
+            }
+        }
+
+
+        // Remove segments in-between two obstacles
+        for (var i = 0; i < segments.length; i++) {
+            var should_delete = false;
+            var seg = segments[i].GetSortedSegment();
+            var midPoint = new Coord(
+                (seg.pointA.x + seg.pointB.x) / 2,
+                (seg.pointA.y + seg.pointB.y) / 2
+            );
+            var obstacleCpt = 0;
+            for (var k = 0; k < obstacles.length; k++) {
+                var obsSegments = obstacles[k].GetSegments();
+                for (var j = 0; j < obsSegments.length; j++) {
+                    var obsSeg = obsSegments[j];
+                    if (obsSeg.Contains(seg.pointA) && obsSeg.Contains(seg.pointB)) {
+                        obstacleCpt++;
+                        break;
+                    }
+                }
+                if (obstacleCpt > 1) {
+                    should_delete = true;
+                    break;
+                }
+            }
+            // check on chunk bounds
+            if (obstacleCpt === 1) {
+                var obsSegments = chunkAsObstacle.GetSegments();
+                for (var j = 0; j < obsSegments.length; j++) {
+                    var obsSeg = obsSegments[j];
+                    if (obsSeg.Contains(seg.pointA) && obsSeg.Contains(seg.pointB)) {
+                        should_delete = true;
+                        break;
+                    }
+                }
+            }
+
+            if (should_delete) {
+                segments.splice(i--, 1);
             }
         }
 
@@ -242,6 +289,7 @@ class Chunk
         return points;
     }
 
+
     public GetNavMesh(doFusion: boolean = true): Array<ConvexShape>
     {
         var t = performance.now();
@@ -249,35 +297,62 @@ class Chunk
         var blockingSegments = this.GetBlockingSegments(obstacles);
         var points = this.GetNavPoints(blockingSegments);
 
+        // console.info("PTS COUNT : " + points.concat([]).length);
+        // points = points.filter(p => !obstacles.some(o => o.Contains(p)));
+        // console.info("PTS COUNT : " + points.concat([]).length);
+        // for (var i = 0; i < points.length - 1; i++) {
+        //     for (var j = i + 1; j < points.length; j++) {
+        //         if (points[i].Equals(points[j])) {
+        //             /*TODO remove point*/
+        //             points.splice(j--, 1);
+        //         }
+        //     }
+        // }
+        // console.info("PTS COUNT : " + points.concat([]).length);
+
         /* TODO
         - Start in any config
         - mid-edge points (!fusion & segments)
-
         */
-        var todoSegments = new Array();
-        todoSegments.push([new Segment(
-            this.coord,
-            new Coord(
-                this.coord.x + Config.World.CHUNK_SIZE,
-                this.coord.y
-            )
-        ), true, null]);
+        var chunkAsObstacle = new Obstacle(this.coord, Config.World.CHUNK_SIZE, Config.World.CHUNK_SIZE);
+        var todoSegments: Array<TodoSegment> = new Array();
+        todoSegments = blockingSegments.map(s =>
+        {
+            return {
+                segment: s,
+                clockwise: true,
+                neightbor: null
+            }
+        });
+
+        // todoSegments.push({
+        //     segment: new Segment(
+        //         this.coord,
+        //         new Coord(
+        //             this.coord.x + Config.World.CHUNK_SIZE,
+        //             this.coord.y
+        //         )
+        //     ),
+        //     clockwise: true,
+        //     neightbor: null
+        // });
+
+        console.log(todoSegments.concat([]));
 
         var triangles: Array<Triangle> = new Array();
         var currentTriangle: Triangle = null;
-        var breakAfter = 140;
+        var breakAfter = 500;
         var cpt = 0;
         var clockwise: boolean;
         while (todoSegments.length > 0 && cpt++ < breakAfter) {
             if (currentTriangle === null) {
                 var todo = todoSegments.shift();
-                clockwise = todo[1];
-                var neightbor = todo[2] !== null ? parseInt(todo[2]) : null;
-                currentTriangle = new Triangle(todo[0]);
-                if (neightbor !== null) {
-                    currentTriangle.neightbors.push(neightbor);
+                clockwise = todo.clockwise;
+                currentTriangle = new Triangle(todo.segment);
+                if (todo.neightbor !== null) {
+                    currentTriangle.neightbors.push(todo.neightbor);
                     for (var k = 0; k < triangles.length; k++) {
-                        if (triangles[k].id === neightbor) {
+                        if (triangles[k].id === todo.neightbor) {
                             if (triangles[k].neightbors.indexOf(currentTriangle.id) === -1) {
                                 triangles[k].neightbors.push(currentTriangle.id);
                             }
@@ -291,6 +366,7 @@ class Chunk
             var currentAngle =
                 clockwise ? currentSegment.pointB.toPolar(refPoint).angle : currentSegment.pointA.toPolar(refPoint).angle;
             // POINTS SORTED BY ANGLE
+
             var sortedPoints =
                 points.filter(p =>
                 {
@@ -317,9 +393,17 @@ class Chunk
 
             var done = false;
             while (!done && sortedPoints.length > 0) {
+                // var expectSeg = new Segment(new Coord(110, 140), new Coord(160, 110));
+                var expectSeg = new Segment(new Coord(140, 160), new Coord(160, 110));
+                if (expectSeg.Equals(currentSegment)) {
+                    console.warn("YEAH");
+                }
                 var point = sortedPoints.shift();
                 var segA = new Segment(currentSegment.pointA, point);
                 var segB = new Segment(point, currentSegment.pointB);
+                var midA = new Coord((segA.pointA.x + segA.pointB.x) / 2, (segA.pointA.y + segA.pointB.y) / 2);
+                var midB = new Coord((segB.pointA.x + segB.pointB.x) / 2, (segB.pointA.y + segB.pointB.y) / 2);
+                // console.info(segB.pointA.toString(), midB.toString(), segB.pointB.toString());
                 if (blockingSegments.some(b =>
                 {
                     var interA = b.GetIntersectionWith(segA, true);
@@ -328,13 +412,39 @@ class Chunk
                         || (interB !== null && !interB.Equals(segB.pointA) && !interB.Equals(segB.pointB) && !interB.Equals(point))
                 })) {
                     continue;
-                } else {
+                }
+                /* TODO + FIXME a fusionner avec la condition du dessus
+                    => Si midpoint dans un obstacle, on recale le point
+                    (but: empecher les todos de partir à l'interieur)
+                */
+                else if (obstacles.some(o => o.Contains(midA) || o.Contains(midB))) {
+                    // console.log(currentSegment.toString(), point);
+                    // var expectSeg = new Segment(new Coord(110, 140), new Coord(160, 110));
+                    // var expectSeg = new Segment(new Coord(140, 160), new Coord(160, 110));
+                    var expectSeg = new Segment(new Coord(0, 300), new Coord(40, 220));
+                    if (expectSeg.Equals(currentSegment)) {
+                        console.log("");
+                        console.info("BLOCKED BY ");
+                        if (obstacles.some(o => o.Contains(midA))) {
+                            console.log(midA.toString(), " FITS IN ", obstacles.filter(o => o.Contains(midA)).map(o => o.toString()));
+                        }
+                        if (obstacles.some(o => o.Contains(midB))) {
+                            console.log(midB.toString(), " FITS IN ", obstacles.filter(o => o.Contains(midB)).map(o => o.toString()));
+                        }
+                    }
+                    continue;
+                }
+                else if (triangles.some(t => t.Contains(midA) || t.Contains(midB))) {
+                    console.info("skipped");
+                    continue;
+                }
+                else {
                     done = true;
                     var EvalSegment = (seg: Segment) =>
                     {
-                        var todo: any = null;
+                        var todo: TodoSegment = null;
                         for (var i = 0; i < todoSegments.length; i++) {
-                            if (seg.Equals(todoSegments[i][0])) {
+                            if (seg.Equals(todoSegments[i].segment)) {
                                 todo = todoSegments[i];
                                 break;
                             }
@@ -343,7 +453,7 @@ class Chunk
                         // si le segment est un bloquant
                         if (blockingSegments.some(b => b.Equals(seg))) {
                             if (alreadyTodo) {
-                                var neightbor = parseInt(todo[2]);
+                                var neightbor = todo.neightbor;
                                 if (neightbor !== null) {
                                     // on ajoute les relations de voisinage
                                     if (currentTriangle.neightbors.indexOf(neightbor) === -1) {
@@ -362,7 +472,7 @@ class Chunk
                                 // si le segment etait à traiter on l'enleve
                                 todoSegments = todoSegments.filter(b =>
                                 {
-                                    return !b[0].Equals(seg);
+                                    return !b.segment.Equals(seg);
                                 });
                             }
                         } else {
@@ -370,7 +480,11 @@ class Chunk
                             blockingSegments.push(seg);
                             // si le segment n'était pas à traiter, il devient à traiter
                             if (!alreadyTodo) {
-                                todoSegments.push([seg, !clockwise, currentTriangle.id]);
+                                todoSegments.unshift({
+                                    segment: seg,
+                                    clockwise: !clockwise,
+                                    neightbor: currentTriangle.id
+                                });
                             }
                         }
                     };
@@ -383,6 +497,9 @@ class Chunk
                 }
             }
         }
+
+        console.info(cpt);
+        console.log(todoSegments.concat([]));
 
         var shapes: Array<ConvexShape> = new Array();
         var trash = new Segment(new Coord(0, 0), new Coord(0, 1));
@@ -490,8 +607,16 @@ class Chunk
             console.info("After fusion : " + shapes.length);
         }
 
-        console.info("NAvMesh Done : " + (performance.now() - t).toFixed(2) + "ms");
+        console.info("NavMesh Done : " + (performance.now() - t).toFixed(2) + "ms");
 
         return shapes;
     }
+}
+
+
+interface TodoSegment
+{
+    segment: Segment;
+    clockwise: boolean;
+    neightbor: number;
 }
