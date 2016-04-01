@@ -30,4 +30,22 @@ class Triangle extends ConvexShape
 
         return s > 0 && t > 0 && (s + t) < 2 * A * sign;
     }
+
+    public Equals(otherTriangle: Triangle): boolean
+    {
+        return this.segments.reduce((prev, current) =>
+        {
+            return prev + (otherTriangle.segments.some(seg => seg.Equals(current)) ? 1 : 0);
+        }, 0) === 3;
+    }
+
+    public Copy(): Triangle
+    {
+        var copy = new Triangle(this.segments[0]);
+        copy.segments = this.segments.concat([]);
+        copy.angles = this.angles.concat([]);
+        copy.isClosed = this.isClosed;
+        copy.neightbors = this.neightbors.concat([]);
+        return copy;
+    }
 }

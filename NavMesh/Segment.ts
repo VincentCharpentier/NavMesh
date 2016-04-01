@@ -120,12 +120,19 @@ class Segment
         }
     }
 
-    public Contains(point: Coord)
+    public Contains(point: Coord, includeBorder = true, log = false): boolean
     {
         var sorted = this.GetSortedSegment();
         // point inside box
-        if (sorted.pointA.x <= point.x && sorted.pointA.y <= point.y
-            && sorted.pointB.x >= point.x && sorted.pointB.y >= point.y) {
+        var inBox = false;
+        if ((sorted.pointA.x <= point.x && sorted.pointA.y <= point.y
+            && sorted.pointB.x >= point.x && sorted.pointB.y >= point.y)) {
+            inBox = true;
+            if (!includeBorder && (sorted.pointA.Equals(point) || sorted.pointB.Equals(point))) {
+                inBox = false;
+            }
+        }
+        if (inBox) {
             var valueAtX: number;
             // Vertical segment, can't compute Y
             if (sorted.dirCoef === Infinity) {

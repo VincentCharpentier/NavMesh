@@ -25,15 +25,16 @@ function Init()
         0
     ));
 
-    var obs = chunk.GetObstacles();
     var meshes = chunk.GetNavMesh();
+    console.log("#############################################################################################");
+    var obs = chunk.GetObstacles();
     var seg = chunk.GetBlockingSegments(obs);
     window["meshes"] = meshes;
     window["segments"] = seg;
     Draw(meshes
         , obs
         , seg
-        , chunk.GetNavMesh(false)
+        // , chunk.GetNavMesh(false)
     );
 }
 
@@ -43,7 +44,7 @@ function Draw(
     blockingSegments?: Array<Segment>,
     originalShapes?: Array<ConvexShape>)
 {
-    console.info(blockingSegments, shapes);
+    // console.info(blockingSegments, shapes);
     var canvas = <HTMLCanvasElement>document.getElementById("canvas");
     canvas.width = Config.World.CHUNK_SIZE;
     canvas.height = Config.World.CHUNK_SIZE;

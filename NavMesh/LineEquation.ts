@@ -8,4 +8,9 @@ class LineEquation
         this.coeffDir = coeff;
         this.zeroVal = zeroValue;
     }
+
+    Equals(other: LineEquation): boolean
+    {
+        return this.coeffDir === other.coeffDir && this.zeroVal === other.zeroVal;
+    }
 }
