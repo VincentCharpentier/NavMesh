@@ -32,6 +32,7 @@ function Init()
     window["meshes"] = meshes;
     window["segments"] = seg;
     Draw(meshes
+        , chunk.obstacles
         , obs
         , seg
         // , chunk.GetNavMesh(false)
@@ -40,6 +41,7 @@ function Init()
 
 function Draw(
     shapes: Array<ConvexShape>,
+    originalObstacles?: Array<Obstacle>,
     obstacles?: Array<Obstacle>,
     blockingSegments?: Array<Segment>,
     originalShapes?: Array<ConvexShape>)
@@ -50,12 +52,40 @@ function Draw(
     canvas.height = Config.World.CHUNK_SIZE;
     var ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
 
+    // draw original Obstacles outlines
+    if (originalObstacles) {
+        ctx.strokeStyle = "#0A0";
+        originalObstacles.forEach(o =>
+        {
+            o.GetSegments().forEach(s =>
+            {
+                ctx.beginPath();
+                ctx.moveTo(s.pointA.x, s.pointA.y);
+                ctx.lineTo(s.pointB.x, s.pointB.y);
+                ctx.stroke();
+            });
+        });
+    }
+
 
     // draw obstacles
     if (obstacles) {
-        ctx.strokeStyle = "#F00";
-        ctx.fillStyle = "rgba(255,0,0,0.3)";
+        ctx.fillStyle = "rgba(255,0,0,0.15)";
         obstacles.forEach(o => ctx.fillRect(o.coord.x, o.coord.y, o.width, o.height));
+
+        // ctx.strokeStyle = "#000";
+        // obstacles.forEach(o =>
+        // {
+        //     o.GetSegments().forEach(s =>
+        //     {
+        //         ctx.beginPath();
+        //         ctx.moveTo(s.pointA.x, s.pointA.y);
+        //         ctx.lineTo(s.pointB.x, s.pointB.y);
+        //         ctx.stroke();
+        //     });
+        // });
+
+        ctx.strokeStyle = "#F00";
         blockingSegments.forEach(s =>
         {
             ctx.beginPath();
@@ -67,22 +97,32 @@ function Draw(
 
 
     if (Config.Debug.TRIANGLE) {
-        // draw original triangles
-        ctx.strokeStyle = "#0F0";
-        originalShapes.forEach(s =>
-        {
-            var currentPoint = s.segments[0].pointA;
-            s.segments.forEach(seg =>
-            {
-                ctx.beginPath();
-                ctx.moveTo(seg.pointA.x, seg.pointA.y);
-                ctx.lineTo(seg.pointB.x, seg.pointB.y);
-                ctx.stroke();
-            });
-        });
+        DrawTriangles(ctx, originalShapes);
     }
 
 
+    DrawMeshes(ctx, shapes);
+}
+
+function DrawTriangles(ctx: CanvasRenderingContext2D, originalShapes: Array<ConvexShape>)
+{
+    // draw original triangles
+    ctx.strokeStyle = "#0F0";
+    originalShapes.forEach(s =>
+    {
+        var currentPoint = s.segments[0].pointA;
+        s.segments.forEach(seg =>
+        {
+            ctx.beginPath();
+            ctx.moveTo(seg.pointA.x, seg.pointA.y);
+            ctx.lineTo(seg.pointB.x, seg.pointB.y);
+            ctx.stroke();
+        });
+    });
+}
+
+function DrawMeshes(ctx: CanvasRenderingContext2D, shapes: Array<ConvexShape>)
+{
     ctx.strokeStyle = "#00F";
     ctx.fillStyle = "rgba(0,0,255,0.2)";
     shapes.forEach(s =>

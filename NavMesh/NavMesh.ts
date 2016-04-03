@@ -60,7 +60,7 @@ class Obstacle
         );
     }
 
-    public Contains(point: Coord, includeBorder = false)
+    public ContainsPoint(point: Coord, includeBorder = false)
     {
         if (includeBorder) {
             if (point.x >= this.coord.x && point.x <= this.distX
@@ -74,6 +74,17 @@ class Obstacle
             }
         }
         return false;
+    }
+
+    public ContainsObstacle(obstacle: Obstacle)
+    {
+        var pts = obstacle.GetKeyPoints();
+        for (var i = 0; i < pts.length; i++) {
+            if (!this.ContainsPoint(pts[i], true)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public GetSegments(): Array<Segment>

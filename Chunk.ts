@@ -4,6 +4,69 @@ class Chunk
     public coord: Coord;
     public navMesh: Array<ConvexShape> = null;
 
+    /* FIXME not working */
+    public obstacles: Array<Obstacle> = new Array(
+        // new Obstacle(
+        //     new Coord(140, 170),
+        //     80,
+        //     10
+        // )
+        // ,
+        new Obstacle(
+            new Coord(200, 80),
+            100,
+            100
+        )
+        ,
+        new Obstacle(
+            new Coord(220, 60),
+            28,
+            100
+        )
+        // ,
+        // new Obstacle(
+        //     new Coord(210, 90),
+        //     10,
+        //     10
+        // )
+
+        // new Obstacle(
+        //     new Coord(-10, -10),
+        //     320,
+        //     20
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(-10, 290),
+        //     320,
+        //     20
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(-10, 140),
+        //     320,
+        //     20
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(-10, -10),
+        //     20,
+        //     320
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(140, -10),
+        //     20,
+        //     320
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(290, -10),
+        //     20,
+        //     320
+        // )
+    );
+
     constructor(coord: Coord)
     {
         this.coord = coord;
@@ -12,62 +75,14 @@ class Chunk
     /* TODO: Fill with real data */
     public GetObstacles(): Array<Obstacle>
     {
-        var obstacles: Array<Obstacle> = new Array();
+        var obstacles: Array<Obstacle> = this.obstacles.concat([]);
         /* TODO: fill obstacles (local and surrounding chunks) */
 
         // obstacles.push(
-        //     new Obstacle(
-        //         new Coord(-10, -10),
-        //         320,
-        //         20
-        //     )
-        //     ,
-        //     new Obstacle(
-        //         new Coord(-10, 290),
-        //         320,
-        //         20
-        //     )
-        //     ,
-        //     new Obstacle(
-        //         new Coord(-10, 140),
-        //         320,
-        //         20
-        //     )
-        //     ,
-        //     new Obstacle(
-        //         new Coord(-10, -10),
-        //         20,
-        //         320
-        //     )
-        //     ,
-        //     new Obstacle(
-        //         new Coord(140, -10),
-        //         20,
-        //         320
-        //     )
-        //     ,
-        //     new Obstacle(
-        //         new Coord(290, -10),
-        //         20,
-        //         320
-        //     )
+
         // );
 
 
-        /* FIXME not working */
-        obstacles.push(
-            new Obstacle(
-                new Coord(140, 170),
-                80,
-                10
-            )
-            ,
-            new Obstacle(
-                new Coord(200, 80),
-                100,
-                100
-            )
-        );
 
         // obstacles.push(
         //     new Obstacle(
@@ -131,31 +146,141 @@ class Chunk
         //     )
         // );
 
-        // normalize to fit inside chunk
-
-        /*
-        obstacles.forEach(o =>
+        var SplitObstacle = (obstacle: Obstacle, verticalSplit: boolean, coordinate: number): Array<Obstacle> =>
         {
-            var coord = o.GetCoord();
-            if (coord.x < this.coord.x) {
-                o.SetWidth(o.GetWidth() + (coord.x - this.coord.x));
-                o.SetCoord(new Coord(this.coord.x, coord.y));
+            var result: Array<Obstacle> = new Array();
+            if (verticalSplit) {
+                // vertical split [ | ]
+                if (obstacle.coord.x < coordinate
+                    && obstacle.coord.x + obstacle.width > coordinate) {
+                    result.push(
+                        new Obstacle(
+                            obstacle.coord,
+                            coordinate - obstacle.coord.x,
+                            obstacle.height
+                        ),
+                        new Obstacle(
+                            new Coord(
+                                coordinate,
+                                obstacle.coord.y
+                            ),
+                            obstacle.width - (coordinate - obstacle.coord.x),
+                            obstacle.height
+                        )
+                    );
+                }
+            } else {
+                // horizontal split [--]
+                if (obstacle.coord.y < coordinate
+                    && obstacle.coord.y + obstacle.height > coordinate) {
+                    result.push(
+                        new Obstacle(
+                            obstacle.coord,
+                            obstacle.width,
+                            coordinate - obstacle.coord.y
+                        ),
+                        new Obstacle(
+                            new Coord(
+                                coordinate,
+                                obstacle.coord.x
+                            ),
+                            obstacle.width,
+                            obstacle.height - (coordinate - obstacle.coord.y)
+                        )
+                    );
+                }
             }
-            if (coord.y < this.coord.y) {
-                o.SetHeight(o.GetHeight() + (coord.y - this.coord.y));
-                o.SetCoord(new Coord(coord.x, this.coord.y));
+            return result;
+        }
+        var loopIterationsTodo = obstacles.length;
+        console.info(loopIterationsTodo);
+        while (loopIterationsTodo-- > 0) {
+            console.info("loop");
+            var currentObstacle = obstacles.shift();
+            // If any obstacle contains this obstacle, remove it
+            if (obstacles.some(o => o.ContainsObstacle(currentObstacle))) {
+                // console.info("delete", currentObstacle.toString());
+                continue;
             }
-            coord = o.GetCoord();
-            var diffX = (this.coord.x + Config.World.CHUNK_SIZE) - (coord.x + o.GetWidth());
-            if (diffX < 0) {
-                o.SetWidth(o.GetWidth() + diffX);
+            var splitDone = false;
+            // Check for horizontal split :
+            // if any horizontal segment of this obstacle intersect with
+            // a segment of another obstacle, split it
+            var hsegments =
+                currentObstacle.GetSegments().filter(s => s.dirCoef === 0);
+            // For each horizontal segments of current obstacle
+            for (var j = 0; j < hsegments.length; j++) {
+                var currentSegment = hsegments[j];
+                // for each obstacles (not the current one)
+                for (var k = 0; k < obstacles.length; k++) {
+                    var otherObstacle = obstacles[k];
+                    var otherSegments = otherObstacle.GetSegments();
+                    // for each segments of other obstacle
+                    for (var l = 0; l < otherSegments.length; l++) {
+                        var otherSegment = otherSegments[l];
+                        var intersection = otherSegment.GetIntersectionWith(currentSegment, false);
+                        if (intersection !== null) {
+                            // SPLIT vertically
+                            var newObstacles = SplitObstacle(currentObstacle, true, intersection.x);
+                            obstacles.unshift(...newObstacles);
+                            loopIterationsTodo += newObstacles.length;
+                            splitDone = true;
+                            break;
+                        }
+                    }
+                    if (splitDone) {
+                        break;
+                    }
+                }
+                if (splitDone) {
+                    break;
+                }
             }
-            var diffY = (this.coord.y + Config.World.CHUNK_SIZE) - (coord.y + o.GetHeight());
-            if (diffY < 0) {
-                o.SetHeight(o.GetHeight() + diffY);
+            if (splitDone) {
+                continue;
             }
-        });
-        */
+            /* FIXME vertical split not working */
+            // Check for vertical split :
+            // if any vertical segment of this obstacle intersect with
+            // a segment of another obstacle, split it
+            var vsegments =
+                currentObstacle.GetSegments().filter(s => s.dirCoef !== 0);
+            // For each horizontal segments of current obstacle
+            for (var j = 0; j < vsegments.length; j++) {
+                var currentSegment = vsegments[j];
+                // for each obstacles (not the current one)
+                for (var k = 0; k < obstacles.length; k++) {
+                    var otherObstacle = obstacles[k];
+                    var otherSegments = otherObstacle.GetSegments();
+                    // for each segments of other obstacle
+                    for (var l = 0; l < otherSegments.length; l++) {
+                        var otherSegment = otherSegments[l];
+                        var intersection = otherSegment.GetIntersectionWith(currentSegment, false);
+                        if (intersection !== null) {
+                            // SPLIT horizontally
+                            console.log("h split");
+                            var newObstacles = SplitObstacle(currentObstacle, false, intersection.y);
+                            obstacles.unshift(...newObstacles);
+                            loopIterationsTodo += newObstacles.length;
+                            splitDone = true;
+                            break;
+                        }
+                    }
+                    if (splitDone) {
+                        break;
+                    }
+                }
+                if (splitDone) {
+                    break;
+                }
+            }
+            if (splitDone) {
+                continue;
+            }
+
+            obstacles.push(currentObstacle);
+        }
+        console.info(obstacles.length);
 
         return obstacles;
     }
@@ -196,13 +321,13 @@ class Chunk
                                 }
                             });
                             segments = segments.filter(seg => !seg.Equals(otherSeg) && !seg.Equals(s));
-                            console.warn(s.toString(), otherSeg.toString());
-                            console.info(segsPoints.concat([]));
+                            // console.warn(s.toString(), otherSeg.toString());
+                            // console.info(segsPoints.concat([]));
                             var pt = segsPoints.shift();
                             var otherPt: Coord;
                             while (otherPt = segsPoints.shift()) {
                                 var newSeg = new Segment(pt, otherPt).GetSortedSegment();
-                                console.info("INSERT : " + newSeg.toString());
+                                // console.info("INSERT : " + newSeg.toString());
                                 segments.push(newSeg);
                                 pt = otherPt;
                                 // break;
@@ -252,7 +377,7 @@ class Chunk
                     && seg.pointB.x >= o.coord.x && seg.pointB.x <= o.coord.x + o.width
                     && seg.pointB.y >= o.coord.y && seg.pointB.y <= o.coord.y + o.height) {
                     // remove segment
-                    console.error("DELETE : " + seg.toString());
+                    // console.error("DELETE : " + seg.toString());
                     segments = segments.filter(s => !s.Equals(seg));
                     i--;
                 }
@@ -406,7 +531,7 @@ class Chunk
         var chunkAsObstacle = new Obstacle(this.coord, Config.World.CHUNK_SIZE, Config.World.CHUNK_SIZE);
         var todoSegments: Array<TodoSegment> = new Array();
         todoSegments = blockingSegments
-            .filter(s => chunkAsObstacle.Contains(s.pointA, true) && chunkAsObstacle.Contains(s.pointB, true))
+            .filter(s => chunkAsObstacle.ContainsPoint(s.pointA, true) && chunkAsObstacle.ContainsPoint(s.pointB, true))
             .map(s =>
             {
                 return {
@@ -431,12 +556,12 @@ class Chunk
         // console.log(blockingSegments.concat([]).map(t => t.toString()));
         // console.log(todoSegments.concat([]).map(t => t.segment.toString()));
         // console.log(points.concat([]).map(t => t.toString()));
-        console.error(blockingSegments.filter(s => s.pointA.y === 180 && s.pointB.y === 180).map(s => s.GetSortedSegment().toString()));
-        console.error(blockingSegments.filter(s => s.Equals(new Segment(new Coord(200, 180), new Coord(140, 180)))));
+        // console.error(blockingSegments.filter(s => s.pointA.y === 180 && s.pointB.y === 180).map(s => s.GetSortedSegment().toString()));
+        // console.error(blockingSegments.filter(s => s.Equals(new Segment(new Coord(200, 180), new Coord(140, 180)))));
 
         var triangles: Array<Triangle> = new Array();
         var currentTriangle: Triangle = null;
-        var breakAfter = 8;
+        var breakAfter = 500;
         var cpt = 0;
         var clockwise: boolean;
         // console.info(todoSegments[0].segment.toString());
@@ -487,7 +612,7 @@ class Chunk
                 });
 
             var log = false;
-            console.debug(currentSegment.toString());
+            // console.debug(currentSegment.toString());
             var expectSeg = new Segment(new Coord(200, 180), new Coord(140, 180));
             if (currentSegment.Equals(expectSeg)) {
                 log = true;
@@ -515,7 +640,7 @@ class Chunk
                     => Si midpoint dans un obstacle, on recale le point
                     (but: empecher les todos de partir à l'interieur)
                 */
-                else if (obstacles.some(o => o.Contains(midA) || o.Contains(midB))) {
+                else if (obstacles.some(o => o.ContainsPoint(midA) || o.ContainsPoint(midB))) {
                     if (log) console.warn("obs", point.toString())
                     continue;
                 }
@@ -532,7 +657,7 @@ class Chunk
                         continue;
                     } else {
                         if (log) console.warn("ELECTED", point.toString())
-                        console.info(currentSegment.toString(), "=>", point.toString());
+                        // console.info(currentSegment.toString(), "=>", point.toString());
                         done = true;
                         var EvalSegment = (seg: Segment) =>
                         {
