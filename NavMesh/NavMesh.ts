@@ -131,4 +131,51 @@ class Obstacle
     {
         return "[o:" + this.coord.toString() + " (" + this.distX + "," + this.distY + ")]";
     }
+
+    public static Split(obstacle: Obstacle, verticalSplit: boolean, coordinate: number): Array<Obstacle>
+    {
+        var result: Array<Obstacle> = new Array();
+        if (verticalSplit) {
+            // vertical split [ | ]
+            if (obstacle.coord.x < coordinate
+                && obstacle.coord.x + obstacle.width > coordinate) {
+                result.push(
+                    new Obstacle(
+                        obstacle.coord,
+                        coordinate - obstacle.coord.x,
+                        obstacle.height
+                    ),
+                    new Obstacle(
+                        new Coord(
+                            coordinate,
+                            obstacle.coord.y
+                        ),
+                        obstacle.width - (coordinate - obstacle.coord.x),
+                        obstacle.height
+                    )
+                );
+            }
+        } else {
+            // horizontal split [--]
+            if (obstacle.coord.y < coordinate
+                && obstacle.coord.y + obstacle.height > coordinate) {
+                result.push(
+                    new Obstacle(
+                        obstacle.coord,
+                        obstacle.width,
+                        coordinate - obstacle.coord.y
+                    ),
+                    new Obstacle(
+                        new Coord(
+                            obstacle.coord.x,
+                            coordinate
+                        ),
+                        obstacle.width,
+                        obstacle.height - (coordinate - obstacle.coord.y)
+                    )
+                );
+            }
+        }
+        return result;
+    }
 }

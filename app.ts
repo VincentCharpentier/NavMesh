@@ -52,20 +52,22 @@ function Draw(
     canvas.height = Config.World.CHUNK_SIZE;
     var ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
 
+    ctx.lineWidth = 0.5;
+
     // draw original Obstacles outlines
-    if (originalObstacles) {
-        ctx.strokeStyle = "#0A0";
-        originalObstacles.forEach(o =>
-        {
-            o.GetSegments().forEach(s =>
-            {
-                ctx.beginPath();
-                ctx.moveTo(s.pointA.x, s.pointA.y);
-                ctx.lineTo(s.pointB.x, s.pointB.y);
-                ctx.stroke();
-            });
-        });
-    }
+    // if (originalObstacles) {
+    //     ctx.strokeStyle = "#0A0";
+    //     originalObstacles.forEach(o =>
+    //     {
+    //         o.GetSegments().forEach(s =>
+    //         {
+    //             ctx.beginPath();
+    //             ctx.moveTo(s.pointA.x, s.pointA.y);
+    //             ctx.lineTo(s.pointB.x, s.pointB.y);
+    //             ctx.stroke();
+    //         });
+    //     });
+    // }
 
 
     // draw obstacles
@@ -92,13 +94,26 @@ function Draw(
             ctx.moveTo(s.pointA.x, s.pointA.y);
             ctx.lineTo(s.pointB.x, s.pointB.y);
             ctx.stroke();
+            ctx.beginPath();
+            ctx.fillRect(
+                s.pointA.x - 2,
+                s.pointA.y - 2,
+                5,
+                5
+            )
+            ctx.fillRect(
+                s.pointB.x - 2,
+                s.pointB.y - 2,
+                5,
+                5
+            )
         });
     }
 
 
-    if (Config.Debug.TRIANGLE) {
-        DrawTriangles(ctx, originalShapes);
-    }
+    // if (Config.Debug.TRIANGLE) {
+    //     DrawTriangles(ctx, originalShapes);
+    // }
 
 
     DrawMeshes(ctx, shapes);
