@@ -73,7 +73,20 @@ function Draw(
     // draw obstacles
     if (obstacles) {
         ctx.fillStyle = "rgba(255,0,0,0.15)";
+        // fill
         obstacles.forEach(o => ctx.fillRect(o.coord.x, o.coord.y, o.width, o.height));
+        // draw edges
+        ctx.strokeStyle = "rgba(255,0,0,0.15)";
+        obstacles.forEach(o =>
+        {
+            o.GetSegments().forEach(s =>
+            {
+                ctx.beginPath();
+                ctx.moveTo(s.pointA.x, s.pointA.y);
+                ctx.lineTo(s.pointB.x, s.pointB.y);
+                ctx.stroke();
+            });
+        });
 
         // ctx.strokeStyle = "#000";
         // obstacles.forEach(o =>

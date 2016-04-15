@@ -472,7 +472,60 @@ class Chunk
             }
         }
 
-        /* TODO Simplify segments */
+
+        // merge contiguous segments
+        for (var i = 0; i < segments.length - 1; i++) {
+            var currentSegment = segments[i];
+            var dirCoef = Math.abs(currentSegment.dirCoef);
+            for (var j = i + 1; j < segments.length; j++) {
+                var otherSegment = segments[j];
+                // parallels
+                if (Math.abs(otherSegment.dirCoef) === dirCoef) {
+                    // horizontal && on same line
+                    if ((dirCoef === 0 && currentSegment.pointA.y === otherSegment.pointA.y)
+                        || (dirCoef === Infinity && currentSegment.pointA.x === otherSegment.pointA.x)) {
+                        // looking for common points
+                        var newSegCoords: Array<Coord> = new Array();
+                        if (currentSegment.pointA.Equals(otherSegment.pointA)) {
+                            newSegCoords.push(
+                                currentSegment.pointB,
+                                otherSegment.pointB
+                            );
+                        } else if (currentSegment.pointA.Equals(otherSegment.pointB)) {
+                            newSegCoords.push(
+                                currentSegment.pointB,
+                                otherSegment.pointA
+                            );
+                        } else if (currentSegment.pointB.Equals(otherSegment.pointA)) {
+                            newSegCoords.push(
+                                currentSegment.pointA,
+                                otherSegment.pointB
+                            );
+                        } else if (currentSegment.pointB.Equals(otherSegment.pointB)) {
+                            newSegCoords.push(
+                                currentSegment.pointA,
+                                otherSegment.pointA
+                            );
+                        } else {
+                            // no common point
+                            continue;
+                        }
+                        console.log("Merge Done");
+                        // Add merge result
+                        segments.push(
+                            new Segment(
+                                newSegCoords[0],
+                                newSegCoords[1]
+                            )
+                        );
+                        // remove both segments
+                        segments.splice(j, 1);
+                        segments.splice(i--, 1);
+                        break;
+                    }
+                }
+            }
+        }
 
         return segments;
     }
@@ -502,6 +555,10 @@ class Chunk
     {
         var t = performance.now();
         var obstacles = this.GetObstacles();
+        var allSegments: Array<Segment> = obstacles.reduce((p, o) =>
+        {
+            return p.concat(o.GetSegments());
+        }, []);
         var blockingSegments = this.GetBlockingSegments(obstacles);
         var points = this.GetNavPoints(blockingSegments);
 
@@ -524,6 +581,13 @@ class Chunk
         var breakAfter = 500;
         var cpt = 0;
         var clockwise: boolean;
+
+        window['genStat'] = {
+            inter: 0,
+            obs: 0,
+            midpoint: 0,
+            exists: 0
+        }
         while (todoSegments.length > 0 && cpt++ < breakAfter) {
             if (currentTriangle === null) {
                 var todo = todoSegments.shift();
@@ -547,10 +611,28 @@ class Chunk
                 clockwise ? currentSegment.pointB.toPolar(refPoint).angle : currentSegment.pointA.toPolar(refPoint).angle;
 
             // POINTS SORTED BY ANGLE
-            var sortedPoints =
+            var sortedPoints: Array<Coord> =
                 points.filter(p =>
                 {
-                    return !p.Equals(currentSegment.pointA) && !p.Equals(currentSegment.pointB);
+                    // chosen point should not be equal to ptA or ptB
+                    if (!p.Equals(currentSegment.pointA) && !p.Equals(currentSegment.pointB)) {
+                        // reduce to visible points
+                        var segA = new Segment(currentSegment.pointA, p);
+                        var segB = new Segment(currentSegment.pointB, p);
+                        var midA = new Coord((segA.pointA.x + segA.pointB.x) / 2, (segA.pointA.y + segA.pointB.y) / 2);
+                        var midB = new Coord((segB.pointA.x + segB.pointB.x) / 2, (segB.pointA.y + segB.pointB.y) / 2);
+                        if (obstacles.some(o => o.ContainsPoint(midA) || o.ContainsPoint(midB))) {
+                            return false;
+                            // window['genStat']['obs']++;
+                            // continue;
+                        }
+                        return !allSegments.some(bckSeg =>
+                        {
+                            return bckSeg.GetIntersectionWith(segA, false) !== null
+                                || bckSeg.GetIntersectionWith(segB, false) !== null;
+                        });
+                    }
+                    return false;
                 }).sort((a, b) =>
                 {
                     var angleA = a.toPolar(refPoint).angle;
@@ -570,20 +652,12 @@ class Chunk
                     }
                 });
 
-            var log = false;
-            var expectSeg = new Segment(new Coord(200, 180), new Coord(140, 180));
-            if (currentSegment.Equals(expectSeg)) {
-                log = true;
-            }
-
 
             var done = false;
             while (!done && sortedPoints.length > 0) {
                 var point = sortedPoints.shift();
                 var segA = new Segment(currentSegment.pointA, point);
                 var segB = new Segment(point, currentSegment.pointB);
-                var midA = new Coord((segA.pointA.x + segA.pointB.x) / 2, (segA.pointA.y + segA.pointB.y) / 2);
-                var midB = new Coord((segB.pointA.x + segB.pointB.x) / 2, (segB.pointA.y + segB.pointB.y) / 2);
                 if (blockingSegments.some(b =>
                 {
                     var interA = b.GetIntersectionWith(segA, true);
@@ -591,30 +665,23 @@ class Chunk
                     return (interA !== null && !interA.Equals(segA.pointA) && !interA.Equals(segA.pointB) && !interA.Equals(point))
                         || (interB !== null && !interB.Equals(segB.pointA) && !interB.Equals(segB.pointB) && !interB.Equals(point))
                 })) {
-                    if (log) console.warn("inter", point.toString())
+                    window['genStat']['inter']++;
                     continue;
                 }
                 /* TODO a fusionner avec la condition du dessus
                     => Si midpoint dans un obstacle, on recale le point
                     (but: empecher les todos de partir à l'interieur)
                 */
-                else if (obstacles.some(o => o.ContainsPoint(midA) || o.ContainsPoint(midB))) {
-                    if (log) console.warn("obs", point.toString())
-                    continue;
-                }
-                else if (triangles.some(t => t.Contains(midA) || t.Contains(midB))) {
-                    if (log) console.warn("midpoint", point.toString())
-                    continue;
-                }
                 else {
                     var copy = currentTriangle.Copy();
                     copy.TryAddSegment(segA);
                     copy.TryAddSegment(segB);
                     if (triangles.some(t => t.Equals(copy))) {
-                        if (log) console.warn("exists", point.toString())
+                        window['genStat']['exists']++;
+                        // if (log) console.warn("exists", point.toString())
                         continue;
                     } else {
-                        if (log) console.warn("ELECTED", point.toString())
+                        // if (log) console.warn("ELECTED", point.toString())
                         // console.info(currentSegment.toString(), "=>", point.toString());
                         done = true;
                         var EvalSegment = (seg: Segment) =>
@@ -676,9 +743,6 @@ class Chunk
             }
         }
 
-        // console.info(cpt);
-
-        // console.log(todoSegments.concat([]).map(t => t.segment.toString()));
 
         var shapes: Array<ConvexShape> = new Array();
         var trash = new Segment(new Coord(0, 0), new Coord(0, 1));
