@@ -11,7 +11,7 @@ class Config
     }
 
     public static Debug = {
-        TRIANGLE: false,
+        TRIANGLE: true,
         SHAPES: true
     }
 }
@@ -25,10 +25,14 @@ function Init()
         0
     ));
 
+    var originalObs = chunk.obstacles.concat([]);
+
     var meshes = chunk.GetNavMesh();
     console.log("#############################################################################################");
     var obs = chunk.GetObstacles();
     var seg = chunk.GetBlockingSegments(obs);
+    window["original_obs"] = originalObs;
+    window["obs"] = obs;
     window["meshes"] = meshes;
     window["segments"] = seg;
     Draw(meshes
@@ -127,8 +131,6 @@ function Draw(
     // if (Config.Debug.TRIANGLE) {
     //     DrawTriangles(ctx, originalShapes);
     // }
-
-
     DrawMeshes(ctx, shapes);
 }
 

@@ -6,146 +6,170 @@ class Chunk
 
     /* FIXME not working */
     public obstacles: Array<Obstacle> = new Array(
-        new Obstacle(
-            new Coord(140, 170),
-            80,
-            10
-        )
-        ,
-
-
         // new Obstacle(
-        //     new Coord(0, 0),
+        //     new Coord(140, 170),
+        //     80,
+        //     10
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(200, 80),
+        //     100,
+        //     100
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(220, 60),
+        //     20,
+        //     100
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(210, 90),
+        //     10,
+        //     10
+        // ),
+        // new Obstacle(
+        //     new Coord(-10, -10),
+        //     320,
+        //     20
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(-10, 290),
+        //     320,
+        //     20
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(-10, 140),
+        //     320,
+        //     20
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(-10, -10),
+        //     20,
+        //     320
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(140, -10),
+        //     20,
+        //     320
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(290, -10),
+        //     20,
+        //     320
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(160, 50),
+        //     60,
+        //     60
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(60, 60),
         //     100,
         //     20
         // )
         // ,
         // new Obstacle(
-        //     new Coord(10, 0),
+        //     new Coord(60, 100),
+        //     20,
+        //     100
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(40, 160),
         //     100,
-        //     20
+        //     60
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(150, 150),
+        //     20,
+        //     50
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(140, 170),
+        //     80,
+        //     10
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(50, 40),
+        //     60,
+        //     100
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(200, 80),
+        //     100,
+        //     100
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(110, 210),
+        //     100,
+        //     70
+        // )
+        // ,
+        // new Obstacle(
+        //     new Coord(250, 180),
+        //     40,
+        //     100
         // )
 
+        // new Obstacle(new Coord(53, 50), 87, 179),
+        // new Obstacle(new Coord(108, 139), 225, 82),
+        // new Obstacle(new Coord(111, 236), 252, 225),
+        // new Obstacle(new Coord(150, 85), 115, 3),
+        // new Obstacle(new Coord(156, 195), 75, 246),
+        // new Obstacle(new Coord(165, 75), 224, 11),
+        // new Obstacle(new Coord(183, 134), 50, 89),
+        // new Obstacle(new Coord(217, 170), 12, 37),
+        // new Obstacle(new Coord(294, 80), 289, 196),
+        // new Obstacle(new Coord(300, 203), 113, 216)
 
-        new Obstacle(
-            new Coord(200, 80),
-            100,
-            100
-        )
-        ,
-        new Obstacle(
-            new Coord(220, 60),
-            20,
-            100
-        )
+        // new Obstacle(new Coord(269, 159), 288, 94),
+        // new Obstacle(new Coord(240, 32), 16, 123),
+        // new Obstacle(new Coord(75, 23), 112, 60),
+        // new Obstacle(new Coord(278, 252), 125, 29),
+        // new Obstacle(new Coord(172, 41), 24, 120),
+        // new Obstacle(new Coord(66, 26), 16, 111),
+        // new Obstacle(new Coord(129, 244), 80, 169),
+        // new Obstacle(new Coord(214, 26), 145, 108),
+        // new Obstacle(new Coord(147, 239), 134, 104),
+        // new Obstacle(new Coord(65, 101), 278, 49)
 
-        ,
-        new Obstacle(
-            new Coord(210, 90),
-            10,
-            10
-        ),
-
-        new Obstacle(
-            new Coord(-10, -10),
-            320,
-            20
-        )
-        ,
-        new Obstacle(
-            new Coord(-10, 290),
-            320,
-            20
-        )
-        ,
-        new Obstacle(
-            new Coord(-10, 140),
-            320,
-            20
-        )
-        ,
-        new Obstacle(
-            new Coord(-10, -10),
-            20,
-            320
-        )
-        ,
-        new Obstacle(
-            new Coord(140, -10),
-            20,
-            320
-        )
-        ,
-        new Obstacle(
-            new Coord(290, -10),
-            20,
-            320
-        )
-        ,
-        new Obstacle(
-            new Coord(160, 50),
-            60,
-            60
-        )
-        ,
-        new Obstacle(
-            new Coord(60, 60),
-            100,
-            20
-        )
-        ,
-        new Obstacle(
-            new Coord(60, 100),
-            20,
-            100
-        )
-        ,
-        new Obstacle(
-            new Coord(40, 160),
-            100,
-            60
-        )
-        ,
-        new Obstacle(
-            new Coord(150, 150),
-            20,
-            50
-        )
-        ,
-        new Obstacle(
-            new Coord(140, 170),
-            80,
-            10
-        )
-        ,
-        new Obstacle(
-            new Coord(50, 40),
-            60,
-            100
-        )
-        ,
-        new Obstacle(
-            new Coord(200, 80),
-            100,
-            100
-        )
-        ,
-        new Obstacle(
-            new Coord(110, 210),
-            100,
-            70
-        )
-        ,
-        new Obstacle(
-            new Coord(250, 180),
-            40,
-            100
-        )
     );
 
     constructor(coord: Coord)
     {
         this.coord = coord;
+
+        /* TODO remove */
+        var randomObstacles = true;
+        if (randomObstacles) {
+            var nbObstacles = 20;
+            while (nbObstacles-- > 0) {
+                this.obstacles.push(
+                    new Obstacle(
+                        new Coord(
+                            Math.round(Math.random() * Config.World.CHUNK_SIZE),
+                            Math.round(Math.random() * Config.World.CHUNK_SIZE)
+                        ),
+                        Math.round(Math.random() * Config.World.CHUNK_SIZE) + 1,
+                        Math.round(Math.random() * Config.World.CHUNK_SIZE) + 1
+                    )
+                );
+            }
+        }
     }
 
     /* TODO: Fill with real data */
@@ -472,6 +496,20 @@ class Chunk
             }
         }
 
+        // Remove segments outside chunk
+        for (var i = 0; i < segments.length; i++) {
+            var seg = segments[i];
+            var isOut =
+                (seg.pointA.x <= 0 && seg.pointB.x <= 0 && (seg.pointA.x !== seg.pointB.x || seg.pointA.x < 0))
+                || (seg.pointA.y <= 0 && seg.pointB.y <= 0 && (seg.pointA.y !== seg.pointB.y || seg.pointA.y < 0))
+                || (seg.pointA.x >= Config.World.CHUNK_SIZE && seg.pointB.x >= Config.World.CHUNK_SIZE
+                    && (seg.pointA.x !== seg.pointB.x || seg.pointA.x > Config.World.CHUNK_SIZE))
+                || (seg.pointA.y >= Config.World.CHUNK_SIZE && seg.pointB.y >= Config.World.CHUNK_SIZE
+                    && (seg.pointA.y !== seg.pointB.y || seg.pointA.y > Config.World.CHUNK_SIZE));
+            if (isOut) {
+                segments.splice(i--, 1);
+            }
+        }
 
         // merge contiguous segments
         for (var i = 0; i < segments.length - 1; i++) {
@@ -510,7 +548,6 @@ class Chunk
                             // no common point
                             continue;
                         }
-                        console.log("Merge Done");
                         // Add merge result
                         segments.push(
                             new Segment(
@@ -651,7 +688,7 @@ class Chunk
                         return angleB - angleA;
                     }
                 });
-
+            // console.log(currentSegment.toString(), sortedPoints.concat([]));
 
             var done = false;
             while (!done && sortedPoints.length > 0) {
@@ -756,7 +793,7 @@ class Chunk
             shapes.push(shape);
         });
 
-        doFusion = false;
+        doFusion = true;
         if (doFusion) {
             console.info("Before fusion : " + shapes.length, triangles.concat([]));
 
