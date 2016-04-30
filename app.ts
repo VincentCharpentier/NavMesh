@@ -1,8 +1,3 @@
-function cl(message?: any, ...optionalParams: any[])
-{
-    console.log.apply(console, arguments);
-}
-
 
 class Config
 {
@@ -11,8 +6,9 @@ class Config
     }
 
     public static Debug = {
-        TRIANGLE: true,
-        SHAPES: true
+        TRIANGLE: false,
+        SHAPES: true,
+        FUSION: true
     }
 }
 
@@ -27,7 +23,7 @@ function Init()
 
     var originalObs = chunk.obstacles.concat([]);
 
-    var meshes = chunk.GetNavMesh();
+    var meshes = chunk.GetNavMesh(Config.Debug.FUSION);
     console.log("#############################################################################################");
     var obs = chunk.GetObstacles();
     var seg = chunk.GetBlockingSegments(obs);
@@ -35,12 +31,60 @@ function Init()
     window["obs"] = obs;
     window["meshes"] = meshes;
     window["segments"] = seg;
+    Monitor.Start("DRAW");
     Draw(meshes
-        , chunk.obstacles
+        , originalObs
         , obs
         , seg
         // , chunk.GetNavMesh(false)
     );
+    Monitor.Stop("DRAW");
+    ShowRecords();
+}
+
+function ShowRecords()
+{
+    let records = Monitor.GetAll().sort((a, b) =>
+    {
+        return b.total_time - a.total_time;
+    });
+    // NavMesh
+    var structRecords = {};
+    var addRecord = (categorie: string, record: MonitorRecord) =>
+    {
+        if (!structRecords[categorie]) {
+            structRecords[categorie] = [];
+        }
+        structRecords[categorie].push(record);
+    }
+    var categories = [
+        "GetNavMesh",
+        "GetBS",
+        "GetObs"
+    ];
+    for (let record of records) {
+        let stored = false;
+        for (let i = 0; i < categories.length; i++) {
+            let cat = categories[i];
+            if (record.name.substring(0, cat.length) === cat) {
+                addRecord(cat, record);
+                stored = true;
+                break;
+            }
+        }
+        if (!stored) {
+            addRecord("other", record);
+        }
+    }
+    for (let name in structRecords) {
+        let records: Array<MonitorRecord> = structRecords[name];
+        let total = records.reduce((p, c) => p + c.total_time, 0);
+        console.info(name + " (" + total.toFixed(2) + "ms):");
+        for (let record of records) {
+            let avg = record.total_time / record.call_count;
+            console.log(record.name + ": " + avg.toFixed(2) + "ms (" + record.call_count + ")");
+        }
+    }
 }
 
 function Draw(
@@ -59,24 +103,28 @@ function Draw(
     ctx.lineWidth = 0.5;
 
     // draw original Obstacles outlines
-    // if (originalObstacles) {
-    //     ctx.strokeStyle = "#0A0";
-    //     originalObstacles.forEach(o =>
-    //     {
-    //         o.GetSegments().forEach(s =>
-    //         {
-    //             ctx.beginPath();
-    //             ctx.moveTo(s.pointA.x, s.pointA.y);
-    //             ctx.lineTo(s.pointB.x, s.pointB.y);
-    //             ctx.stroke();
-    //         });
-    //     });
-    // }
+    if (originalObstacles) {
+        ctx.strokeStyle = "#0A0";
+        ctx.fillStyle = "rgba(0,180,0,0.2)";
+        originalObstacles.forEach(o =>
+        {
+            // stroke
+            // o.GetSegments().forEach(s =>
+            // {
+            //     ctx.beginPath();
+            //     ctx.moveTo(s.pointA.x, s.pointA.y);
+            //     ctx.lineTo(s.pointB.x, s.pointB.y);
+            //     ctx.stroke();
+            // });
+            // fill
+            // ctx.fillRect(o.coord.x, o.coord.y, o.width, o.height);
+        });
+    }
 
 
     // draw obstacles
     if (obstacles) {
-        ctx.fillStyle = "rgba(255,0,0,0.15)";
+        ctx.fillStyle = "rgba(255,0,0,0.1)";
         // fill
         obstacles.forEach(o => ctx.fillRect(o.coord.x, o.coord.y, o.width, o.height));
         // draw edges
@@ -105,33 +153,37 @@ function Draw(
         // });
 
         ctx.strokeStyle = "#F00";
-        blockingSegments.forEach(s =>
-        {
-            ctx.beginPath();
-            ctx.moveTo(s.pointA.x, s.pointA.y);
-            ctx.lineTo(s.pointB.x, s.pointB.y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.fillRect(
-                s.pointA.x - 2,
-                s.pointA.y - 2,
-                5,
-                5
-            )
-            ctx.fillRect(
-                s.pointB.x - 2,
-                s.pointB.y - 2,
-                5,
-                5
-            )
-        });
+        if (blockingSegments) {
+            blockingSegments.forEach(s =>
+            {
+                ctx.beginPath();
+                ctx.moveTo(s.pointA.x, s.pointA.y);
+                ctx.lineTo(s.pointB.x, s.pointB.y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.fillRect(
+                    s.pointA.x - 2,
+                    s.pointA.y - 2,
+                    5,
+                    5
+                )
+                ctx.fillRect(
+                    s.pointB.x - 2,
+                    s.pointB.y - 2,
+                    5,
+                    5
+                )
+            });
+        }
     }
 
 
     // if (Config.Debug.TRIANGLE) {
     //     DrawTriangles(ctx, originalShapes);
     // }
-    DrawMeshes(ctx, shapes);
+    if (Config.Debug.SHAPES) {
+        DrawMeshes(ctx, shapes);
+    }
 }
 
 function DrawTriangles(ctx: CanvasRenderingContext2D, originalShapes: Array<ConvexShape>)
@@ -192,6 +244,24 @@ function DrawMeshes(ctx: CanvasRenderingContext2D, shapes: Array<ConvexShape>)
     });
 }
 
+function StringifyObs()
+{
+    return window["original_obs"]
+        .map((o: Obstacle) => "new Obstacle(new Coord" + o.coord.toString() + "," + o.width + "," + o.height + ")")
+        .join(",\n");
+}
+
+function HighLightSeg(x1: number, y1: number, x2: number, y2: number)
+{
+    var canvas = <HTMLCanvasElement>document.getElementById("canvas");
+    var ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
+    ctx.strokeStyle = "#0F0";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
 
 // #######################################################
 //

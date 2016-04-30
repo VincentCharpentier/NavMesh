@@ -51,7 +51,6 @@ class Obstacle
 
     public GetKeyPoints(): Array<Coord>
     {
-        /* TODO: mid-edges ? */
         return new Array(
             this.coord,
             new Coord(this.distX, this.coord.y),
